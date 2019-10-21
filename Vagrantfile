@@ -28,25 +28,126 @@ SUPPORTED_OS = {
   "oraclelinux"         => {box: "generic/oracle7", user: "vagrant"},
 }
 
+$subnet = "192.168.70"
+
+BOXES = [
+    {
+        :name => "k8s-master1",
+        :eth1 => "#{$subnet}.101",
+        :mem => "2048",
+        :cpu => "2",
+        :iscsi => "false",
+        :worker => "false",
+        :etcd => "false",
+        :master => "true"
+    },
+    {
+        :name => "k8s-master2",
+        :eth1 => "#{$subnet}.102",
+        :mem => "2048",
+        :cpu => "2",
+        :iscsi => "false",
+        :worker => "false",
+        :etcd => "false",
+        :master => "true"
+    },
+    {
+        :name => "k8s-master3",
+        :eth1 => "#{$subnet}.103",
+        :mem => "2048",
+        :cpu => "2",
+        :iscsi => "false",
+        :worker => "false",
+        :etcd => "false",
+        :master => "true"
+    },
+    {
+        :name => "k8s-etcd1",
+        :eth1 => "#{$subnet}.111",
+        :mem => "1024",
+        :cpu => "1",
+        :iscsi => "true",
+        :worker => "false",
+        :etcd => "true",
+        :master => "false"
+    },
+    {
+        :name => "k8s-etcd2",
+        :eth1 => "#{$subnet}.112",
+        :mem => "1024",
+        :cpu => "1",
+        :iscsi => "true",
+        :worker => "false",
+        :etcd => "true",
+        :master => "false"
+    },
+    {
+        :name => "k8s-etcd3",
+        :eth1 => "#{$subnet}.113",
+        :mem => "1024",
+        :cpu => "1",
+        :iscsi => "true",
+        :worker => "false",
+        :etcd => "true",
+        :master => "false"
+    },
+    {
+        :name => "k8s-worker1",
+        :eth1 => "#{$subnet}.121",
+        :mem => "2048",
+        :cpu => "2",
+        :iscsi => "true",
+        :worker => "true",
+        :etcd => "false",
+        :master => "false"
+    },
+    {
+        :name => "k8s-worker2",
+        :eth1 => "#{$subnet}.122",
+        :mem => "2048",
+        :cpu => "2",
+        :iscsi => "true",
+        :worker => "true",
+        :etcd => "false",
+        :master => "false"
+    },
+    {
+        :name => "k8s-worker3",
+        :eth1 => "#{$subnet}.123",
+        :mem => "2048",
+        :cpu => "2",
+        :iscsi => "true",
+        :worker => "true",
+        :etcd => "false",
+        :master => "false"
+    }
+]
+
+
+
 # Defaults for config options defined in CONFIG
-$num_instances = 3
-$instance_name_prefix = "k8s"
+
+# The first two nodes are kube masters
+$kube_master_instances = 3
+# The first three nodes are etcd servers
+$etcd_instances = 3
+# All nodes are kube nodes
+$kube_node_instances = 3
+$num_instances = BOXES.length
+$master_name_prefix = "k8s-master"
+$etcd_name_prefix = "k8s-etcd"
+$worker_name_prefix = "k8s-worker"
+$instance_name_prefix = "k8s-node"
 $vm_gui = false
 $vm_memory = 2048
 $vm_cpus = 1
 $shared_folders = {}
 $forwarded_ports = {}
-$subnet = "172.17.8"
 $os = "ubuntu1804"
 $network_plugin = "flannel"
 # Setting multi_networking to true will install Multus: https://github.com/intel/multus-cni
 $multi_networking = false
-# The first three nodes are etcd servers
-$etcd_instances = $num_instances
-# The first two nodes are kube masters
-$kube_master_instances = $num_instances == 1 ? $num_instances : ($num_instances - 1)
-# All nodes are kube nodes
-$kube_node_instances = $num_instances
+
 # The following only works when using the libvirt provider
 $kube_node_instances_with_disks = false
 $kube_node_instances_with_disks_size = "20G"
@@ -86,6 +187,37 @@ if Vagrant.has_plugin?("vagrant-proxyconf")
     end
 end
 
+$iscsi_script = <<-SHELL
+  apt-get -y install nfs-common \
+  && apt-get -y install open-iscsi
+  echo "NEED_STATD=yes" >> /etc/default/nfs-common
+  iscsiadm --mode node --logout
+  # Init iSCSI start
+  sudo -i
+  apt-get -y install open-iscsi
+echo "
+InitiatorName=#{$InitiatorName}:true
+" > /etc/iscsi/initiatorname.iscsi
+  systemctl restart iscsid open-iscsi
+  iscsiadm -m discovery --portal "#{$portal}:3260" --op=delete
+  iscsiadm -m discovery -t st -p "#{$portal}"
+  iscsiadm -m node --targetname "#{$InitiatorName}:true" --portal "#{$portal}:3260" --op=update --name node.startup --value automatic
+  iscsiadm -m node --targetname "#{$InitiatorName}:true" --portal "#{$portal}:3260" --op=update --name "node.conn[0].startup" --value "automatic"
+  iscsiadm -m node --targetname "#{$InitiatorName}:true" --portal "#{$portal}:3260" --login
+  parted --script /dev/sdb "mklabel msdos"
+  parted --script /dev/sdb "mkpart primary 0% 100%"
+  mkdir -p /data
+  yes | mkfs.ext4 /dev/sdb
+  mount /dev/sdb /data
+  echo "
+
+  # iSCSI #{$InitiatorName}:true START
+  /dev/sdb   /data  ext4  defaults,auto,_netdev 0 0
+  # iSCSI #{$InitiatorName}:true END
+  " >> /etc/fstab
+  echo "/data mounted"
+SHELL
+
 Vagrant.configure("2") do |config|
 
   config.vm.box = $box
@@ -108,11 +240,12 @@ Vagrant.configure("2") do |config|
     end
     config.disksize.size = $disk_size
   end
+  current_item = 0
 
-  (1..$num_instances).each do |i|
-    config.vm.define vm_name = "%s-%01d" % [$instance_name_prefix, i] do |node|
-
-      node.vm.hostname = vm_name
+  BOXES.each do |opts|
+    config.vm.define vm_name = opts[:name] do |node|
+    current_item = (current_item + 1)
+    node.vm.hostname = vm_name
 
       if Vagrant.has_plugin?("vagrant-proxyconf")
         node.proxy.http     = ENV['HTTP_PROXY'] || ENV['http_proxy'] || ""
@@ -122,15 +255,15 @@ Vagrant.configure("2") do |config|
 
       ["vmware_fusion", "vmware_workstation"].each do |vmware|
         node.vm.provider vmware do |v|
-          v.vmx['memsize'] = $vm_memory
-          v.vmx['numvcpus'] = $vm_cpus
+          v.vmx['memsize'] = opts[:mem]
+          v.vmx['numvcpus'] = opts[:cpu]
         end
       end
 
       node.vm.provider :virtualbox do |vb|
-        vb.memory = $vm_memory
-        vb.cpus = $vm_cpus
         vb.gui = $vm_gui
+        vb.memory = opts[:mem]
+        vb.cpus = opts[:cpu]
         vb.linked_clone = true
         vb.customize ["modifyvm", :id, "--vram", "8"] # ubuntu defaults to 256 MB which is a waste of precious RAM
       end
@@ -170,35 +303,36 @@ Vagrant.configure("2") do |config|
         node.vm.synced_folder src, dst, type: "rsync", rsync__args: ['--verbose', '--archive', '--delete', '-z']
       end
 
-      ip = "#{$subnet}.#{i+100}"
+      ip = opts[:eth1]
       node.vm.network :private_network, ip: ip
 
       # Disable swap for each vm
       node.vm.provision "shell", inline: "swapoff -a"
 
       host_vars[vm_name] = {
-        "ip": ip,
-        "flannel_interface": "eth1",
-        "kube_network_plugin": $network_plugin,
-        "kube_network_plugin_multus": $multi_networking,
-        "download_run_once": "True",
-        "download_localhost": "False",
-        "download_cache_dir": ENV['HOME'] + "/kubespray_cache",
+        "ip"=> ip,
+        "flannel_interface"=> "eth1",
+        "kube_network_plugin"=> $network_plugin,
+        "kube_network_plugin_multus"=> $multi_networking,
+        "download_run_once"=> "True",
+        "download_localhost"=> "False",
+        "download_cache_dir"=> ENV['HOME'] + "/kubespray_cache",
         # Make kubespray cache even when download_run_once is false
-        "download_force_cache": "True",
+        "download_force_cache"=> "True",
         # Keeping the cache on the nodes can improve provisioning speed while debugging kubespray
-        "download_keep_remote_cache": "False",
-        "docker_keepcache": "1",
+        "download_keep_remote_cache"=> "False",
+        "docker_keepcache"=> "1",
         # These two settings will put kubectl and admin.config in $inventory/artifacts
-        "kubeconfig_localhost": "True",
-        "kubectl_localhost": "True",
-        "local_path_provisioner_enabled": "#{$local_path_provisioner_enabled}",
-        "local_path_provisioner_claim_root": "#{$local_path_provisioner_claim_root}",
-        "ansible_ssh_user": SUPPORTED_OS[$os][:user]
+        "kubeconfig_localhost"=> "True",
+        "kubectl_localhost"=> "True",
+        "local_path_provisioner_enabled"=> "#{$local_path_provisioner_enabled}",
+        "local_path_provisioner_claim_root"=> "#{$local_path_provisioner_claim_root}",
+        "ansible_ssh_user"=> SUPPORTED_OS[$os][:user]
       }
 
       # Only execute the Ansible provisioner once, when all the machines are up and ready.
-      if i == $num_instances
+      puts "Current item: #{current_item} from #{$num_instances}"
+      #if "#{current_item}" == "#{$num_instances}"
         node.vm.provision "ansible" do |ansible|
           ansible.playbook = $playbook
           $ansible_inventory_path = File.join( $inventory, "hosts.ini")
@@ -212,13 +346,13 @@ Vagrant.configure("2") do |config|
           ansible.host_vars = host_vars
           #ansible.tags = ['download']
           ansible.groups = {
-            "etcd" => ["#{$instance_name_prefix}-[1:#{$etcd_instances}]"],
-            "kube-master" => ["#{$instance_name_prefix}-[1:#{$kube_master_instances}]"],
-            "kube-node" => ["#{$instance_name_prefix}-[1:#{$kube_node_instances}]"],
+            "etcd" => ["#{$etcd_name_prefix}-[1:#{$etcd_instances}]"],
+            "kube-master" => ["#{$master_name_prefix}-[1:#{$kube_master_instances}]"],
+            "kube-node" => ["#{$worker_name_prefix}-[1:#{$kube_node_instances}]"],
             "k8s-cluster:children" => ["kube-master", "kube-node"],
           }
         end
-      end
+      #end
 
     end
   end
