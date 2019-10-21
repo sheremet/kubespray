@@ -28,11 +28,11 @@ SUPPORTED_OS = {
   "oraclelinux"         => {box: "generic/oracle7", user: "vagrant"},
 }
 
-$subnet = "192.168.70"
+$subnet = "192.168.80"
 
 BOXES = [
     {
-        :name => "k8s-master1",
+        :name => "k8s-master-1",
         :eth1 => "#{$subnet}.101",
         :mem => "2048",
         :cpu => "2",
@@ -42,7 +42,7 @@ BOXES = [
         :master => "true"
     },
     {
-        :name => "k8s-master2",
+        :name => "k8s-master-2",
         :eth1 => "#{$subnet}.102",
         :mem => "2048",
         :cpu => "2",
@@ -52,19 +52,9 @@ BOXES = [
         :master => "true"
     },
     {
-        :name => "k8s-master3",
-        :eth1 => "#{$subnet}.103",
-        :mem => "2048",
-        :cpu => "2",
-        :iscsi => "false",
-        :worker => "false",
-        :etcd => "false",
-        :master => "true"
-    },
-    {
-        :name => "k8s-etcd1",
+        :name => "k8s-etcd-1",
         :eth1 => "#{$subnet}.111",
-        :mem => "1024",
+        :mem => "2048",
         :cpu => "1",
         :iscsi => "true",
         :worker => "false",
@@ -72,9 +62,9 @@ BOXES = [
         :master => "false"
     },
     {
-        :name => "k8s-etcd2",
+        :name => "k8s-etcd-2",
         :eth1 => "#{$subnet}.112",
-        :mem => "1024",
+        :mem => "2048",
         :cpu => "1",
         :iscsi => "true",
         :worker => "false",
@@ -82,9 +72,9 @@ BOXES = [
         :master => "false"
     },
     {
-        :name => "k8s-etcd3",
+        :name => "k8s-etcd-3",
         :eth1 => "#{$subnet}.113",
-        :mem => "1024",
+        :mem => "2048",
         :cpu => "1",
         :iscsi => "true",
         :worker => "false",
@@ -92,19 +82,39 @@ BOXES = [
         :master => "false"
     },
     {
-        :name => "k8s-worker1",
+        :name => "k8s-worker-sm-1",
         :eth1 => "#{$subnet}.121",
         :mem => "2048",
-        :cpu => "2",
+        :cpu => "1",
         :iscsi => "true",
         :worker => "true",
         :etcd => "false",
         :master => "false"
     },
     {
-        :name => "k8s-worker2",
+        :name => "k8s-worker-sm-2",
         :eth1 => "#{$subnet}.122",
         :mem => "2048",
+        :cpu => "1",
+        :iscsi => "true",
+        :worker => "true",
+        :etcd => "false",
+        :master => "false"
+    },
+    {
+        :name => "k8s-worker-sm-3",
+        :eth1 => "#{$subnet}.123",
+        :mem => "2048",
+        :cpu => "1",
+        :iscsi => "true",
+        :worker => "true",
+        :etcd => "false",
+        :master => "false"
+    },
+    {
+        :name => "k8s-worker-md-1",
+        :eth1 => "#{$subnet}.131",
+        :mem => "4096",
         :cpu => "2",
         :iscsi => "true",
         :worker => "true",
@@ -112,27 +122,65 @@ BOXES = [
         :master => "false"
     },
     {
-        :name => "k8s-worker3",
-        :eth1 => "#{$subnet}.123",
-        :mem => "2048",
+        :name => "k8s-worker-md-2",
+        :eth1 => "#{$subnet}.132",
+        :mem => "4096",
         :cpu => "2",
         :iscsi => "true",
         :worker => "true",
         :etcd => "false",
         :master => "false"
+    },
+    {
+        :name => "k8s-worker-md-3",
+        :eth1 => "#{$subnet}.133",
+        :mem => "4096",
+        :cpu => "2",
+        :iscsi => "true",
+        :worker => "true",
+        :etcd => "false",
+        :master => "false"
+    },
+    {
+       :name => "k8s-worker-lg-1",
+       :eth1 => "#{$subnet}.141",
+       :mem => "8192",
+       :cpu => "2",
+       :iscsi => "true",
+       :worker => "true",
+       :etcd => "false",
+       :master => "false"
+    },
+    {
+       :name => "k8s-worker-lg-2",
+       :eth1 => "#{$subnet}.142",
+       :mem => "8192",
+       :cpu => "2",
+       :iscsi => "true",
+       :worker => "true",
+       :etcd => "false",
+       :master => "false"
+    },
+    {
+       :name => "k8s-worker-lg-3",
+       :eth1 => "#{$subnet}.143",
+       :mem => "8192",
+       :cpu => "2",
+       :iscsi => "true",
+       :worker => "true",
+       :etcd => "false",
+       :master => "false"
     }
 ]
-
-
 
 # Defaults for config options defined in CONFIG
 
 # The first two nodes are kube masters
-$kube_master_instances = 3
+$kube_master_instances = 2
 # The first three nodes are etcd servers
 $etcd_instances = 3
 # All nodes are kube nodes
-$kube_node_instances = 3
+$kube_node_instances = 6
 $num_instances = BOXES.length
 $master_name_prefix = "k8s-master"
 $etcd_name_prefix = "k8s-etcd"
@@ -150,10 +198,10 @@ $multi_networking = false
 
 # The following only works when using the libvirt provider
 $kube_node_instances_with_disks = false
-$kube_node_instances_with_disks_size = "20G"
+$kube_node_instances_with_disks_size = "25G"
 $kube_node_instances_with_disks_number = 2
 $override_disk_size = false
-$disk_size = "20GB"
+$disk_size = "25GB"
 $local_path_provisioner_enabled = false
 $local_path_provisioner_claim_root = "/opt/local-path-provisioner/"
 
@@ -185,6 +233,23 @@ if Vagrant.has_plugin?("vagrant-proxyconf")
     (1..$num_instances).each do |i|
         $no_proxy += ",#{$subnet}.#{i+100}"
     end
+end
+
+# Set nodes arrays and group by `master`, `etcd`, `worker`
+$etcd_nodes = []
+$master_nodes = []
+$worker_nodes = []
+
+(1..$num_instances).each do |box|
+  if box[:etcd] == "true"
+    $etcd_nodes.push(box[:name])
+  end
+  if box[:master] == "true"
+    $master_nodes.push(box[:name])
+  end
+  if box[:worker] == "true"
+    $worker_nodes.push(box[:name])
+  end
 end
 
 $iscsi_script = <<-SHELL
@@ -240,6 +305,7 @@ Vagrant.configure("2") do |config|
     end
     config.disksize.size = $disk_size
   end
+
   current_item = 0
 
   BOXES.each do |opts|
@@ -310,29 +376,30 @@ Vagrant.configure("2") do |config|
       node.vm.provision "shell", inline: "swapoff -a"
 
       host_vars[vm_name] = {
-        "ip"=> ip,
-        "flannel_interface"=> "eth1",
-        "kube_network_plugin"=> $network_plugin,
-        "kube_network_plugin_multus"=> $multi_networking,
-        "download_run_once"=> "True",
-        "download_localhost"=> "False",
-        "download_cache_dir"=> ENV['HOME'] + "/kubespray_cache",
+        "ip" => ip,
+        "flannel_interface" => "eth1",
+        "kube_network_plugin" => $network_plugin,
+        "kube_network_plugin_multus" => $multi_networking,
+        "download_run_once" => "True",
+        "download_localhost" => "False",
+        "download_cache_dir" => ENV['HOME'] + "/kubespray_cache",
         # Make kubespray cache even when download_run_once is false
-        "download_force_cache"=> "True",
+        "download_force_cache" => "True",
         # Keeping the cache on the nodes can improve provisioning speed while debugging kubespray
-        "download_keep_remote_cache"=> "False",
-        "docker_keepcache"=> "1",
+        "download_keep_remote_cache" => "False",
+        "docker_keepcache" => "1",
         # These two settings will put kubectl and admin.config in $inventory/artifacts
-        "kubeconfig_localhost"=> "True",
-        "kubectl_localhost"=> "True",
-        "local_path_provisioner_enabled"=> "#{$local_path_provisioner_enabled}",
-        "local_path_provisioner_claim_root"=> "#{$local_path_provisioner_claim_root}",
-        "ansible_ssh_user"=> SUPPORTED_OS[$os][:user]
+        "kubeconfig_localhost" => "True",
+        "kubectl_localhost" => "True",
+        "local_path_provisioner_enabled" => "#{$local_path_provisioner_enabled}",
+        "local_path_provisioner_claim_root" => "#{$local_path_provisioner_claim_root}",
+        "ansible_ssh_user" => SUPPORTED_OS[$os][:user]
       }
 
       # Only execute the Ansible provisioner once, when all the machines are up and ready.
       puts "Current item: #{current_item} from #{$num_instances}"
-      #if "#{current_item}" == "#{$num_instances}"
+      if "#{current_item}" == "#{$num_instances}"
+      puts "Ansible run on #{$num_instances}"
         node.vm.provision "ansible" do |ansible|
           ansible.playbook = $playbook
           $ansible_inventory_path = File.join( $inventory, "hosts.ini")
@@ -346,14 +413,14 @@ Vagrant.configure("2") do |config|
           ansible.host_vars = host_vars
           #ansible.tags = ['download']
           ansible.groups = {
-            "etcd" => ["#{$etcd_name_prefix}-[1:#{$etcd_instances}]"],
-            "kube-master" => ["#{$master_name_prefix}-[1:#{$kube_master_instances}]"],
-            "kube-node" => ["#{$worker_name_prefix}-[1:#{$kube_node_instances}]"],
+            "etcd" => $etcd_nodes,
+            "kube-master" => $master_nodes,
+            "kube-node" => $worker_nodes,
             "k8s-cluster:children" => ["kube-master", "kube-node"],
           }
         end
-      #end
-
+      end
+      # Ansible end
     end
   end
 end
