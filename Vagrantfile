@@ -242,13 +242,13 @@ $worker_nodes = []
 
 (1..$num_instances).each do |box|
   if box[:etcd] == "true"
-    $etcd_nodes.push(box[:name])
+    $etcd_nodes.push("#{box[:name]}")
   end
   if box[:master] == "true"
-    $master_nodes.push(box[:name])
+    $master_nodes.push("#{box[:name]}")
   end
   if box[:worker] == "true"
-    $worker_nodes.push(box[:name])
+    $worker_nodes.push("#{box[:name]}")
   end
 end
 
