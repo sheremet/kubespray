@@ -192,7 +192,7 @@ $vm_cpus = 1
 $shared_folders = {}
 $forwarded_ports = {}
 $os = "ubuntu1804"
-$network_plugin = "flannel"
+$network_plugin = "calico"
 # Setting multi_networking to true will install Multus: https://github.com/intel/multus-cni
 $multi_networking = false
 
@@ -327,6 +327,7 @@ Vagrant.configure("2") do |config|
       end
 
       node.vm.provider :virtualbox do |vb|
+        vb.default_nic_type = "virtio"
         vb.gui = $vm_gui
         vb.memory = opts[:mem]
         vb.cpus = opts[:cpu]
@@ -377,6 +378,8 @@ Vagrant.configure("2") do |config|
 
       host_vars[vm_name] = {
         "ip" => ip,
+        "ansible_host" => ip,
+        "ansible_port" => 22,
         "flannel_interface" => "eth1",
         "kube_network_plugin" => $network_plugin,
         "kube_network_plugin_multus" => $multi_networking,
@@ -393,7 +396,8 @@ Vagrant.configure("2") do |config|
         "kubectl_localhost" => "True",
         "local_path_provisioner_enabled" => "#{$local_path_provisioner_enabled}",
         "local_path_provisioner_claim_root" => "#{$local_path_provisioner_claim_root}",
-        "ansible_ssh_user" => SUPPORTED_OS[$os][:user]
+        "ansible_ssh_user" => SUPPORTED_OS[$os][:user],
+        "ansible_ssh_pass" => SUPPORTED_OS[$os][:user]
       }
 
       # Only execute the Ansible provisioner once, when all the machines are up and ready.
