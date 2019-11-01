@@ -33,6 +33,9 @@ k8s-worker-sm-[1:3]
 k8s-worker-md-[1:3]
 k8s-worker-lg-[1:3]
 
+[calico-rr]
+
 [k8s-cluster:children]
 kube-master
 kube-node
+calico-rr

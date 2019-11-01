@@ -380,7 +380,7 @@ Vagrant.configure("2") do |config|
         "ip" => ip,
         "ansible_host" => ip,
         "ansible_port" => 22,
-        "flannel_interface" => "eth1",
+#        "flannel_interface" => "eth1",
         "kube_network_plugin" => $network_plugin,
         "kube_network_plugin_multus" => $multi_networking,
         "download_run_once" => "True",

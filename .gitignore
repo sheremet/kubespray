@@ -19,7 +19,7 @@ vagrant/
 inventory/*
 !inventory/local
 !inventory/sample
-**/vagrant_ansible_inventory
+!inventory/sample/vagrant_ansible_inventory_default
 inventory/*/artifacts/
 
 # Byte-compiled / optimized / DLL files
@@ -98,5 +98,4 @@ target/
 # virtualenv
 venv/
 ENV/
-!/inventory/sample/vagrant_ansible_inventory
 /certs/
