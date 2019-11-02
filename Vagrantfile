@@ -303,7 +303,7 @@ Vagrant.configure("2") do |config|
 
   # plugin conflict
   if Vagrant.has_plugin?("vagrant-vbguest") then
-    config.vbguest.auto_update = true
+    config.vbguest.auto_update = false
   end
 
   # always use Vagrants insecure key
