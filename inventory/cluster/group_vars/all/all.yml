@@ -17,15 +17,15 @@ bin_dir: /usr/local/bin
 
 
 ## External LB example config
-## apiserver_loadbalancer_domain_name: "elb.some.domain"
-# loadbalancer_apiserver:
-#   address: 1.2.3.4
-#   port: 1234
+apiserver_loadbalancer_domain_name: "k8s.rancher2.tk"
+loadbalancer_apiserver:
+  address: 192.168.80.100
+  port: 6443
 
 ## Internal loadbalancers for apiservers
-# loadbalancer_apiserver_localhost: true
+loadbalancer_apiserver_localhost: true
 # valid options are "nginx" or "haproxy"
-# loadbalancer_apiserver_type: nginx # valid values "nginx" or "haproxy"
+loadbalancer_apiserver_type: nginx # valid values "nginx" or "haproxy"
 
 ## Local loadbalancer should use this port
 ## And must be set port 6443
@@ -75,7 +75,7 @@ loadbalancer_apiserver_healthcheck_port: 8081
 ## Chose 'none' if you provide your own certificates.
 ## Option is  "script", "none"
 ## note: vault is removed
-cert_management: script
+# cert_management: script
 
 ## Set to true to allow pre-checks to fail and continue deployment
 # ignore_assert_errors: false

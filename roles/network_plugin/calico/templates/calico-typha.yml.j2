@@ -48,7 +48,7 @@ spec:
         cluster-autoscaler.kubernetes.io/safe-to-evict: 'true'
     spec:
       nodeSelector:
-        beta.kubernetes.io/os: linux
+        kubernetes.io/os: linux
       hostNetwork: true
       tolerations:
         - key: node-role.kubernetes.io/master
@@ -82,6 +82,8 @@ spec:
             value: "kubernetes"
           - name: TYPHA_HEALTHENABLED
             value: "true"
+          - name: TYPHA_MAXCONNECTIONSLOWERLIMIT
+            value: "{{ typha_max_connections_lower_limit }}"
 {% if typha_secure %}
           - name: TYPHA_CAFILE
             value: /etc/ca/ca.crt

@@ -1,7 +1,7 @@
 ---
 ## Uncomment this if you want to force overlay/overlay2 as docker storage driver
 ## Please note that overlay2 is only supported on newer kernels
-# docker_storage_options: -s overlay2
+docker_storage_options: -s overlay2
 
 ## Enable docker_container_storage_setup, it will configure devicemapper driver on Centos7 or RedHat7.
 docker_container_storage_setup: false
@@ -51,4 +51,4 @@ docker_rpm_keepcache: 0
 
 ## A string of extra options to pass to the docker daemon.
 ## This string should be exactly as you wish it to appear.
-docker_options: >-
+# docker_options: ""
