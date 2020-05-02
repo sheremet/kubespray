@@ -17,6 +17,8 @@ vagrant/
 
 # Ansible inventory
 inventory/*
+!inventory/cluster
+inventory/cluster/credentials/
 !inventory/local
 !inventory/sample
 !inventory/sample/vagrant_ansible_inventory_default
@@ -99,3 +101,4 @@ target/
 venv/
 ENV/
 /certs/
+
