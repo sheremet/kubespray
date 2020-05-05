@@ -20,7 +20,7 @@ bin_dir: /usr/local/bin
 apiserver_loadbalancer_domain_name: "k8s.rancher2.tk"
 loadbalancer_apiserver:
   address: 10.201.54.10
-  port: 6443
+  port: 8383
 
 ## Internal loadbalancers for apiservers
 #loadbalancer_apiserver_localhost: false
