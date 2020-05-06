@@ -17,10 +17,10 @@ bin_dir: /usr/local/bin
 
 
 ## External LB example config
-apiserver_loadbalancer_domain_name: "k8s.rancher2.tk"
-loadbalancer_apiserver:
-  address: 10.201.54.10
-  port: 8383
+#apiserver_loadbalancer_domain_name: "k8s.rancher2.tk"
+#loadbalancer_apiserver:
+#  address: 10.201.54.10
+#  port: 8383
 
 ## Internal loadbalancers for apiservers
 #loadbalancer_apiserver_localhost: false
